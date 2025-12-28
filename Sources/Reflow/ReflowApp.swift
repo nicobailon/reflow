@@ -15,6 +15,7 @@ struct ReflowApp: App {
     @State private var isMenuPresented = false
     @State private var statusItem: NSStatusItem?
     @State private var hasActivatedOnce = false
+    @State private var previousApp: NSRunningApplication?
     
     private let updaterController: SPUStandardUpdaterController
     
@@ -54,6 +55,9 @@ struct ReflowApp: App {
                 dismiss: { isMenuPresented = false }
             )
             .onReceive(NotificationCenter.default.publisher(for: .togglePopover)) { _ in
+                if !isMenuPresented {
+                    previousApp = NSWorkspace.shared.frontmostApplication
+                }
                 isMenuPresented.toggle()
                 if isMenuPresented {
                     NSApp.activate(ignoringOtherApps: true)
@@ -63,7 +67,14 @@ struct ReflowApp: App {
                 if let userInfo = notification.userInfo,
                    let item = userInfo["item"] as? ClipboardHistoryItem,
                    let reflow = userInfo["reflow"] as? Bool {
-                    monitor.pasteFromHistory(item: item, reflow: reflow)
+                    if let app = previousApp {
+                        app.activate()
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            monitor.pasteFromHistory(item: item, reflow: reflow)
+                        }
+                    } else {
+                        monitor.pasteFromHistory(item: item, reflow: reflow)
+                    }
                 }
             }
         } label: {
@@ -89,6 +100,17 @@ struct ReflowApp: App {
         .menuBarExtraStyle(.window)
         .onChange(of: settings.autoReflowEnabled) { _, _ in
             applyStatusItemAppearance()
+        }
+        .onChange(of: isMenuPresented) { wasPresented, isNowPresented in
+            if !wasPresented && isNowPresented && previousApp == nil {
+                let frontmost = NSWorkspace.shared.frontmostApplication
+                if frontmost?.bundleIdentifier != Bundle.main.bundleIdentifier {
+                    previousApp = frontmost
+                }
+            }
+            if !isNowPresented {
+                previousApp = nil
+            }
         }
         
         Settings {

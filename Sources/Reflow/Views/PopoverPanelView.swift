@@ -75,7 +75,7 @@ struct PopoverPanelView: View {
             case 36: // Return
                 if let item = self.selectedItem {
                     self.dismiss()
-                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
                         NotificationCenter.default.post(
                             name: .pasteHistoryItem,
                             object: nil,
@@ -292,8 +292,12 @@ struct PopoverPanelView: View {
                             isSelected: selectedItemId == item.id,
                             onPaste: { reflow in
                                 dismiss()
-                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-                                    monitor.pasteFromHistory(item: item, reflow: reflow)
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                                    NotificationCenter.default.post(
+                                        name: .pasteHistoryItem,
+                                        object: nil,
+                                        userInfo: ["item": item, "reflow": reflow]
+                                    )
                                 }
                             },
                             onTogglePin: {
