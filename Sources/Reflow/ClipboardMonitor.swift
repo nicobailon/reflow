@@ -20,7 +20,6 @@ final class ClipboardMonitor: ObservableObject {
     private let pasteIntoFrontmostApp: () -> Void
     private var ignoredChangeCounts: Set<Int> = []
     private var lastOriginalText: String?
-    private var lastReflowedText: String?
     
     @Published var lastSummary: String = ""
     @Published var frontmostAppName: String = "current app"
@@ -108,7 +107,7 @@ final class ClipboardMonitor: ObservableObject {
                 updateSummary(with: raw)
                 return true
             }
-            cache(original: nil, reflowed: nil)
+            cacheOriginal(nil)
             return false
         }
         
@@ -117,7 +116,7 @@ final class ClipboardMonitor: ObservableObject {
         let isMixedSource = sourceApp?.isMixedSourceApp == true
         
         guard settings.autoReflowEnabled || force else {
-            cache(original: text, reflowed: nil)
+            cacheOriginal(text)
             return false
         }
         
@@ -133,7 +132,7 @@ final class ClipboardMonitor: ObservableObject {
         }
         
         guard shouldProcess else {
-            cache(original: text, reflowed: nil)
+            cacheOriginal(text)
             return false
         }
         
@@ -142,12 +141,12 @@ final class ClipboardMonitor: ObservableObject {
         let result = ReflowEngine.reflow(text, options: options)
         
         guard result.wasTransformed else {
-            cache(original: text, reflowed: nil)
+            cacheOriginal(text)
             if force { updateSummary(with: text) }
             return false
         }
         
-        cache(original: text, reflowed: result.reflowed)
+        cacheOriginal(text)
         updateSummary(with: result.reflowed)
         registerReflowEvent()
         return true
@@ -185,9 +184,8 @@ final class ClipboardMonitor: ObservableObject {
             .replacingOccurrences(of: "\r", with: "\n")
     }
     
-    private func cache(original: String?, reflowed: String?) {
-        lastOriginalText = original
-        lastReflowedText = reflowed
+    private func cacheOriginal(_ text: String?) {
+        lastOriginalText = text
     }
     
     private func registerReflowEvent() {
@@ -246,7 +244,7 @@ extension ClipboardMonitor {
             return true
         }
         
-        cache(original: original, reflowed: result.reflowed)
+        cacheOriginal(original)
         updateSummary(with: result.reflowed)
         registerReflowEvent()
         statisticsManager.recordPaste(linesJoined: result.linesJoined)
@@ -266,8 +264,7 @@ extension ClipboardMonitor {
             return false
         }
         
-        lastOriginalText = original
-        lastReflowedText = nil
+        cacheOriginal(original)
         updateSummary(with: original)
         performPaste(with: original)
         return true
@@ -283,7 +280,7 @@ extension ClipboardMonitor {
         if reflow && item.isReflowCandidate {
             let result = ReflowEngine.reflow(item.content, options: settings.reflowOptions)
             if result.wasTransformed {
-                cache(original: item.content, reflowed: result.reflowed)
+                cacheOriginal(item.content)
                 updateSummary(with: result.reflowed)
                 registerReflowEvent()
                 statisticsManager.recordPaste(linesJoined: result.linesJoined)
@@ -292,7 +289,7 @@ extension ClipboardMonitor {
             }
         }
         
-        cache(original: item.content, reflowed: nil)
+        cacheOriginal(item.content)
         updateSummary(with: item.content)
         performPaste(with: item.content)
         return true
