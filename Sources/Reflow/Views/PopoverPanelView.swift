@@ -76,6 +76,30 @@ struct PopoverPanelView: View {
                     }
                     return nil
                 }
+            case 126: // Up arrow
+                let items = self.historyManager.filteredItems
+                if !items.isEmpty {
+                    if let currentId = self.selectedItemId,
+                       let currentIndex = items.firstIndex(where: { $0.id == currentId }),
+                       currentIndex > 0 {
+                        self.selectedItemId = items[currentIndex - 1].id
+                    } else {
+                        self.selectedItemId = items.last?.id
+                    }
+                    return nil
+                }
+            case 125: // Down arrow
+                let items = self.historyManager.filteredItems
+                if !items.isEmpty {
+                    if let currentId = self.selectedItemId,
+                       let currentIndex = items.firstIndex(where: { $0.id == currentId }),
+                       currentIndex < items.count - 1 {
+                        self.selectedItemId = items[currentIndex + 1].id
+                    } else {
+                        self.selectedItemId = items.first?.id
+                    }
+                    return nil
+                }
             case 51: // Delete
                 if let id = self.selectedItemId {
                     let items = self.historyManager.filteredItems
