@@ -82,6 +82,9 @@ struct HistoryPanelView: View {
                         monitor.pasteFromHistory(item: item, reflow: reflow)
                         dismiss()
                     },
+                    onTogglePin: {
+                        historyManager.togglePin(item.id)
+                    },
                     onDelete: {
                         historyManager.removeItem(item.id)
                     }
@@ -107,10 +110,17 @@ struct HistoryItemRow: View {
     let index: Int
     let isSelected: Bool
     let onPaste: (Bool) -> Void
+    let onTogglePin: () -> Void
     let onDelete: () -> Void
     
     var body: some View {
         HStack(spacing: 10) {
+            if item.isPinned {
+                Image(systemName: "pin.fill")
+                    .font(.caption)
+                    .foregroundStyle(.orange)
+            }
+            
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     if item.isFromTerminal {
@@ -163,6 +173,10 @@ struct HistoryItemRow: View {
             }
             
             Divider()
+            
+            Button(item.isPinned ? "Unpin" : "Pin") {
+                onTogglePin()
+            }
             
             Button("Delete", role: .destructive) {
                 onDelete()

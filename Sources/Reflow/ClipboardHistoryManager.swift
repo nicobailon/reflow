@@ -11,6 +11,7 @@ struct ClipboardHistoryItem: Codable, Identifiable, Sendable {
     var copyCount: Int
     let isFromTerminal: Bool
     let isMixedSourceApp: Bool
+    var isPinned: Bool = false
     
     init(
         content: String,
@@ -95,15 +96,21 @@ final class ClipboardHistoryManager: ObservableObject {
             var item = items[existingIndex]
             item.lastCopyDate = Date()
             item.copyCount += 1
-            items.remove(at: existingIndex)
-            items.insert(item, at: 0)
+            items[existingIndex] = item
         } else {
             let newItem = ClipboardHistoryItem(content: text, sourceApp: source)
-            items.insert(newItem, at: 0)
-            
-            if items.count > maxItems {
-                items = Array(items.prefix(maxItems))
-            }
+            items.append(newItem)
+        }
+        
+        sortItems()
+        
+        let pinnedCount = items.filter { $0.isPinned }.count
+        let unpinnedLimit = maxItems - pinnedCount
+        var unpinnedCount = 0
+        items = items.filter { item in
+            if item.isPinned { return true }
+            unpinnedCount += 1
+            return unpinnedCount <= unpinnedLimit
         }
         
         save()
@@ -112,6 +119,22 @@ final class ClipboardHistoryManager: ObservableObject {
     func removeItem(_ id: UUID) {
         items.removeAll { $0.id == id }
         save()
+    }
+    
+    func togglePin(_ id: UUID) {
+        guard let index = items.firstIndex(where: { $0.id == id }) else { return }
+        items[index].isPinned.toggle()
+        sortItems()
+        save()
+    }
+    
+    private func sortItems() {
+        items.sort { a, b in
+            if a.isPinned != b.isPinned {
+                return a.isPinned
+            }
+            return a.lastCopyDate > b.lastCopyDate
+        }
     }
     
     func clear() {
