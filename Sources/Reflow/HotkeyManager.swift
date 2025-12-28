@@ -7,6 +7,7 @@ extension KeyboardShortcuts.Name {
     @MainActor static let toggleAutoReflow = Self("toggleAutoReflow")
     @MainActor static let pasteConservative = Self("pasteConservative")
     @MainActor static let pasteAggressive = Self("pasteAggressive")
+    @MainActor static let showHistory = Self("showHistory")
 }
 
 enum DefaultShortcuts {
@@ -15,17 +16,21 @@ enum DefaultShortcuts {
     @MainActor static let toggleAutoReflow = KeyboardShortcuts.Shortcut(.r, modifiers: [.command, .control])
     @MainActor static let pasteConservative: KeyboardShortcuts.Shortcut? = nil
     @MainActor static let pasteAggressive: KeyboardShortcuts.Shortcut? = nil
+    @MainActor static let showHistory = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .shift])
 }
 
 @MainActor
 final class HotkeyManager: ObservableObject {
     private let monitor: ClipboardMonitor
     private let settings: AppSettings
+    private let historyManager: ClipboardHistoryManager
     private var handlersRegistered = false
+    @Published var showingHistoryPanel = false
     
-    init(settings: AppSettings, monitor: ClipboardMonitor) {
+    init(settings: AppSettings, monitor: ClipboardMonitor, historyManager: ClipboardHistoryManager) {
         self.settings = settings
         self.monitor = monitor
+        self.historyManager = historyManager
         ensureDefaultShortcuts()
         registerHandlers()
     }
@@ -39,6 +44,9 @@ final class HotkeyManager: ObservableObject {
         }
         if KeyboardShortcuts.getShortcut(for: .toggleAutoReflow) == nil {
             KeyboardShortcuts.setShortcut(DefaultShortcuts.toggleAutoReflow, for: .toggleAutoReflow)
+        }
+        if KeyboardShortcuts.getShortcut(for: .showHistory) == nil {
+            KeyboardShortcuts.setShortcut(DefaultShortcuts.showHistory, for: .showHistory)
         }
     }
     
@@ -72,6 +80,12 @@ final class HotkeyManager: ObservableObject {
         KeyboardShortcuts.onKeyUp(for: .pasteAggressive) { [weak self] in
             Task { @MainActor in
                 self?.monitor.pasteReflowed(aggressiveness: .aggressive)
+            }
+        }
+        
+        KeyboardShortcuts.onKeyUp(for: .showHistory) { [weak self] in
+            Task { @MainActor in
+                self?.showingHistoryPanel = true
             }
         }
         
