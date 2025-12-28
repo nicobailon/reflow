@@ -33,6 +33,9 @@ struct SettingsShortcutsPane: View {
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteConservative, for: .pasteConservative)
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteAggressive, for: .pasteAggressive)
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.showHistory, for: .showHistory)
+                    for name in HotkeyManager.historyShortcutNames {
+                        KeyboardShortcuts.setShortcut(nil, for: name)
+                    }
                 }
             }
         }
