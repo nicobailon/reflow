@@ -26,7 +26,7 @@ struct PopoverPanelView: View {
             Divider()
             bottomToolbar
         }
-        .frame(width: 750, height: 450)
+        .frame(width: 650, height: 480)
         .onAppear {
             searchFieldFocused = true
             if selectedItemId == nil, let first = historyManager.filteredItems.first {
@@ -238,99 +238,98 @@ struct PopoverPanelView: View {
     }
     
     private var bottomToolbar: some View {
-        HStack(spacing: 12) {
-            Toggle("Auto-Reflow", isOn: $settings.autoReflowEnabled)
-                .toggleStyle(.switch)
-                .controlSize(.small)
-            
+        VStack(spacing: 0) {
             Divider()
-                .frame(height: 16)
             
-            Picker("", selection: $settings.aggressiveness) {
-                Text("Conserv").tag(Aggressiveness.conservative)
-                Text("Normal").tag(Aggressiveness.normal)
-                Text("Aggress").tag(Aggressiveness.aggressive)
+            HStack(spacing: 16) {
+                Toggle("Auto-Reflow", isOn: $settings.autoReflowEnabled)
+                    .toggleStyle(.switch)
+                    .controlSize(.small)
+                
+                Picker("Aggressiveness:", selection: $settings.aggressiveness) {
+                    Text("Conservative").tag(Aggressiveness.conservative)
+                    Text("Normal").tag(Aggressiveness.normal)
+                    Text("Aggressive").tag(Aggressiveness.aggressive)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 260)
+                
+                Toggle("Markdown", isOn: $settings.markdownAware)
+                    .toggleStyle(.button)
+                    .controlSize(.small)
+                
+                Spacer()
             }
-            .pickerStyle(.segmented)
-            .font(.caption)
-            .frame(width: 180)
-            
-            Toggle("Markdown", isOn: $settings.markdownAware)
-                .toggleStyle(.button)
-                .font(.caption)
-                .controlSize(.small)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
             
             Divider()
-                .frame(height: 16)
             
-            if let item = selectedItem {
-                HStack(spacing: 4) {
-                    Text("Clipboard Source:")
-                        .foregroundStyle(.secondary)
-                    Text(item.sourceDisplayName)
-                        .lineLimit(1)
-                    if item.isFromTerminal {
-                        Text("(terminal)")
-                            .foregroundStyle(.blue)
+            HStack(spacing: 12) {
+                if let item = selectedItem {
+                    HStack(spacing: 4) {
+                        Text("Source:")
+                            .foregroundStyle(.secondary)
+                        Text(item.sourceDisplayName)
+                            .lineLimit(1)
+                        if item.isFromTerminal {
+                            Text("(terminal)")
+                                .foregroundStyle(.blue)
+                        }
                     }
+                    .font(.caption)
+                }
+                
+                Spacer()
+                
+                HStack(spacing: 4) {
+                    Text("Session:")
+                        .foregroundStyle(.secondary)
+                    Text("\(statisticsManager.sessionLinesJoined) lines, \(statisticsManager.sessionPastes) pastes")
                 }
                 .font(.caption)
-            }
-            
-            Spacer()
-            
-            HStack(spacing: 4) {
-                Text("Stats:")
-                    .foregroundStyle(.secondary)
-                Text("\(statisticsManager.sessionLinesJoined)")
-                    .foregroundStyle(.primary)
-                Text("lines")
-                    .foregroundStyle(.tertiary)
-            }
-            .font(.caption)
-            .help("Session: \(statisticsManager.sessionLinesJoined) lines, \(statisticsManager.sessionPastes) pastes\nAll Time: \(statisticsManager.allTimeLinesJoined) lines, \(statisticsManager.allTimePastes) pastes")
-            
-            Divider()
-                .frame(height: 16)
-            
-            if !accessibilityManager.isTrusted {
-                Button {
-                    accessibilityManager.requestPermission()
+                
+                Divider()
+                    .frame(height: 12)
+                
+                if !accessibilityManager.isTrusted {
+                    Button {
+                        accessibilityManager.requestPermission()
+                    } label: {
+                        Image(systemName: "exclamationmark.triangle")
+                            .foregroundStyle(.orange)
+                    }
+                    .buttonStyle(.borderless)
+                }
+                
+                Menu {
+                    Button("Clear History") {
+                        historyManager.clear()
+                    }
+                    Button("Reset Statistics") {
+                        statisticsManager.resetSession()
+                    }
+                    Divider()
+                    Button("Settings...") {
+                        NSApp.activate(ignoringOtherApps: true)
+                        openSettings()
+                    }
+                    Button("Check for Updates...") {
+                        updater.checkForUpdates()
+                    }
+                    Divider()
+                    Button("Quit Reflow") {
+                        NSApplication.shared.terminate(nil)
+                    }
                 } label: {
-                    Image(systemName: "exclamationmark.triangle")
-                        .foregroundStyle(.orange)
+                    Image(systemName: "ellipsis.circle")
                 }
                 .buttonStyle(.borderless)
-                .help("Grant Accessibility Permission")
+                .menuIndicator(.hidden)
             }
-            
-            Menu {
-                Button("Clear History") {
-                    historyManager.clear()
-                }
-                Button("Reset Statistics") {
-                    statisticsManager.resetSession()
-                }
-                Divider()
-                Button("Settings...") {
-                    NSApp.activate(ignoringOtherApps: true)
-                    openSettings()
-                }
-                Button("Check for Updates...") {
-                    updater.checkForUpdates()
-                }
-                Divider()
-                Button("Quit Reflow") {
-                    NSApplication.shared.terminate(nil)
-                }
-            } label: {
-                Image(systemName: "ellipsis.circle")
-            }
-            .buttonStyle(.borderless)
-            .menuIndicator(.hidden)
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 10)
         .background(.ultraThinMaterial)
     }
 }
