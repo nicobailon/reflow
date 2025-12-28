@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 — Unreleased
+## 0.1.1 — 2025-12-28
 
 ### Clipboard History
 - Maccy-style popover panel as the primary interface (click menu bar icon to open)
@@ -9,9 +9,10 @@
 - Collapsible details section showing source app, timestamps, and copy count
 - Hover highlighting on history items
 - Context menu with Paste Reflowed, Paste Original, Pin/Unpin, Delete
-- Keyboard shortcuts: Return to paste, Delete to remove, Escape to close
+- Keyboard navigation: arrow keys to select, Return to paste, Delete to remove, Escape to close
 - Cmd+1-9 global hotkeys for quick paste (configurable in Settings)
 - Search filters history in real-time with auto-selection
+- Non-terminal items visually dimmed; option to hide them entirely
 
 ### Core Features
 - Menu bar app with no Dock icon (LSUIElement)
@@ -21,6 +22,7 @@
 - ReflowEngine: markdown-aware text unwrapping with custom regex patterns
 - Three aggressiveness levels: Conservative, Normal, Aggressive
 - Statistics tracking (session + all-time lines joined and paste counts)
+- Proper focus restoration when pasting from panel (activates previous app)
 
 ### Keyboard Shortcuts
 - Cmd+Ctrl+V: Paste Reflowed
@@ -34,8 +36,10 @@
 - Analysis tools: `--analyze-width`, `--check-terminal`
 
 ### Settings
+- Accessibility section with "Grant Access" button
 - Configurable global hotkeys
 - Launch at login option
 - Aggressiveness level selection
 - Markdown-aware mode toggle
+- Show Only Terminal Items toggle
 - Sparkle auto-updates (placeholder, requires signing)
