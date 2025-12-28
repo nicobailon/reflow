@@ -17,6 +17,12 @@ struct SettingsShortcutsPane: View {
             
             Section("History") {
                 KeyboardShortcuts.Recorder("Show History:", name: .showHistory)
+                
+                DisclosureGroup("Quick Paste from History") {
+                    ForEach(0..<9, id: \.self) { index in
+                        KeyboardShortcuts.Recorder("Paste #\(index + 1):", name: HotkeyManager.historyShortcutNames[index])
+                    }
+                }
             }
             
             Section {
