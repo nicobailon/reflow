@@ -72,26 +72,32 @@ struct HistoryPanelView: View {
     }
     
     private var historyList: some View {
-        ScrollViewReader { proxy in
-            List(selection: $selectedItemId) {
-                ForEach(Array(historyManager.filteredItems.enumerated()), id: \.element.id) { index, item in
-                    HistoryItemRow(
-                        item: item,
-                        index: index,
-                        isSelected: selectedItemId == item.id,
-                        onPaste: { reflow in
-                            monitor.pasteFromHistory(item: item, reflow: reflow)
-                            dismiss()
-                        },
-                        onDelete: {
-                            historyManager.removeItem(item.id)
-                        }
-                    )
-                    .tag(item.id)
-                }
+        List(selection: $selectedItemId) {
+            ForEach(Array(historyManager.filteredItems.enumerated()), id: \.element.id) { index, item in
+                HistoryItemRow(
+                    item: item,
+                    index: index,
+                    isSelected: selectedItemId == item.id,
+                    onPaste: { reflow in
+                        monitor.pasteFromHistory(item: item, reflow: reflow)
+                        dismiss()
+                    },
+                    onDelete: {
+                        historyManager.removeItem(item.id)
+                    }
+                )
+                .tag(item.id)
             }
-            .listStyle(.plain)
-            .scrollContentBackground(.hidden)
+        }
+        .listStyle(.plain)
+        .scrollContentBackground(.hidden)
+        .onKeyPress(.return) {
+            if let id = selectedItemId, let item = historyManager.items.first(where: { $0.id == id }) {
+                monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
+                dismiss()
+                return .handled
+            }
+            return .ignored
         }
     }
 }
@@ -102,8 +108,6 @@ struct HistoryItemRow: View {
     let isSelected: Bool
     let onPaste: (Bool) -> Void
     let onDelete: () -> Void
-    
-    @State private var isHovering = false
     
     var body: some View {
         HStack(spacing: 10) {
@@ -148,12 +152,6 @@ struct HistoryItemRow: View {
         }
         .padding(.vertical, 4)
         .contentShape(Rectangle())
-        .onHover { hovering in
-            isHovering = hovering
-        }
-        .onTapGesture(count: 2) {
-            onPaste(item.isReflowCandidate)
-        }
         .contextMenu {
             Button("Paste Reflowed") {
                 onPaste(true)
@@ -173,11 +171,4 @@ struct HistoryItemRow: View {
     }
 }
 
-struct HistoryWindow: View {
-    @ObservedObject var historyManager: ClipboardHistoryManager
-    @ObservedObject var monitor: ClipboardMonitor
-    
-    var body: some View {
-        HistoryPanelView(historyManager: historyManager, monitor: monitor)
-    }
-}
+

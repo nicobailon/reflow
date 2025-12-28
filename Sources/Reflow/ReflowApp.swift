@@ -53,6 +53,7 @@ struct ReflowApp: App {
             Divider()
             CheckForUpdatesView(updater: updaterController.updater)
             Button("Quit") { NSApplication.shared.terminate(nil) }
+            HistoryWindowOpener()
         } label: {
             StatusLabel(
                 monitor: monitor,
@@ -82,6 +83,18 @@ struct ReflowApp: App {
     
     private func applyStatusItemAppearance() {
         statusItem?.button?.appearsDisabled = !settings.autoReflowEnabled
+    }
+}
+
+struct HistoryWindowOpener: View {
+    @Environment(\.openWindow) private var openWindow
+    
+    var body: some View {
+        Color.clear
+            .frame(width: 0, height: 0)
+            .onReceive(NotificationCenter.default.publisher(for: .showHistoryPanel)) { _ in
+                openWindow(id: "history")
+            }
     }
 }
 

@@ -87,11 +87,7 @@ final class HotkeyManager: ObservableObject {
         KeyboardShortcuts.onKeyUp(for: .showHistory) {
             Task { @MainActor in
                 NSApp.activate(ignoringOtherApps: true)
-                if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "history" }) {
-                    window.makeKeyAndOrderFront(nil)
-                } else {
-                    NotificationCenter.default.post(name: .showHistoryPanel, object: nil)
-                }
+                NotificationCenter.default.post(name: .showHistoryPanel, object: nil)
             }
         }
         
