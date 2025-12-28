@@ -4,6 +4,7 @@ import Sparkle
 
 struct SettingsGeneralPane: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject var historyManager: ClipboardHistoryManager
     let updater: SPUUpdater
     
     var body: some View {
@@ -12,6 +13,7 @@ struct SettingsGeneralPane: View {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
                 Toggle("Auto-Reflow Enabled", isOn: $settings.autoReflowEnabled)
                 Toggle("Markdown-Aware Mode", isOn: $settings.markdownAware)
+                Toggle("Clipboard History", isOn: $historyManager.historyEnabled)
             }
             
             Section {
