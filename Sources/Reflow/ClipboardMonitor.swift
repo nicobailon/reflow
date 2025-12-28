@@ -164,38 +164,6 @@ final class ClipboardMonitor: ObservableObject {
         readTextFromPasteboard(ignoreMarker: true)
     }
     
-    var currentClipboard: ClipboardState? {
-        guard let text = lastOriginalText ?? clipboardText() else { return nil }
-        let sourceApp = lastCopySource
-        let isFromTerminal = sourceApp?.isRecognizedTerminal == true
-        let isMixedSource = sourceApp?.isMixedSourceApp == true
-        
-        let shouldAnalyze: Bool
-        if isFromTerminal {
-            shouldAnalyze = settings.autoReflowEnabled
-        } else if isMixedSource && settings.autoReflowEnabled {
-            shouldAnalyze = ReflowEngine.looksLikeTerminalOutput(text)
-        } else {
-            shouldAnalyze = false
-        }
-        
-        let reflowResult = shouldAnalyze ? ReflowEngine.reflow(text, options: settings.reflowOptions) : nil
-        
-        return ClipboardState(
-            text: text,
-            sourceApp: sourceApp,
-            reflowResult: reflowResult,
-            isReflowable: reflowResult?.wasTransformed == true
-        )
-    }
-    
-    struct ClipboardState: Sendable {
-        let text: String
-        let sourceApp: SourceAppInfo?
-        let reflowResult: ReflowResult?
-        let isReflowable: Bool
-    }
-    
     private func updateSummary(with text: String) {
         let singleLine = text.replacingOccurrences(of: "\n", with: " ")
         lastSummary = Self.ellipsize(singleLine, limit: 90)
@@ -303,17 +271,6 @@ extension ClipboardMonitor {
         updateSummary(with: original)
         performPaste(with: original)
         return true
-    }
-    
-    func reflowedPreviewText() -> String {
-        if let reflowed = lastReflowedText {
-            return Self.ellipsize(reflowed.replacingOccurrences(of: "\n", with: " "), limit: 100)
-        }
-        return lastSummary.isEmpty ? "No reflowed text yet" : lastSummary
-    }
-    
-    func originalPreviewSource() -> String? {
-        lastOriginalText
     }
     
     @discardableResult

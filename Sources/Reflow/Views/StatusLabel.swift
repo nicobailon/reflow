@@ -4,10 +4,6 @@ struct StatusLabel: View {
     @ObservedObject var monitor: ClipboardMonitor
     var isEnabled: Bool
     
-    private var hasReflowableContent: Bool {
-        monitor.currentClipboard?.isReflowable == true
-    }
-    
     var body: some View {
         Label("Reflow", systemImage: "text.justify.left")
             .symbolRenderingMode(.hierarchical)
