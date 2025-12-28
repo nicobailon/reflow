@@ -5,10 +5,31 @@ import Sparkle
 struct SettingsGeneralPane: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var historyManager: ClipboardHistoryManager
+    @ObservedObject var accessibilityManager: AccessibilityManager
     let updater: SPUUpdater
     
     var body: some View {
         Form {
+            Section("Accessibility") {
+                HStack {
+                    Image(systemName: accessibilityManager.isTrusted ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                        .foregroundStyle(accessibilityManager.isTrusted ? .green : .orange)
+                    Text(accessibilityManager.isTrusted ? "Accessibility permission granted" : "Accessibility permission required")
+                    Spacer()
+                    if !accessibilityManager.isTrusted {
+                        Button("Grant Access") {
+                            accessibilityManager.requestPermission()
+                        }
+                    }
+                }
+                
+                if !accessibilityManager.isTrusted {
+                    Text("Reflow needs Accessibility permission to paste text. Click 'Grant Access' and enable Reflow in System Settings.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            
             Section {
                 Toggle("Launch at Login", isOn: $settings.launchAtLogin)
                 Toggle("Auto-Reflow Enabled", isOn: $settings.autoReflowEnabled)

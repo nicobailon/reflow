@@ -74,7 +74,7 @@ struct ReflowApp: App {
         }
         
         Settings {
-            SettingsView(settings: settings, historyManager: historyManager, updater: updaterController.updater)
+            SettingsView(settings: settings, historyManager: historyManager, accessibilityManager: accessibilityManager, updater: updaterController.updater)
         }
     }
     
