@@ -8,7 +8,104 @@ struct HistoryPanelView: View {
     @State private var selectedItemId: UUID?
     @FocusState private var searchFieldFocused: Bool
     
+    private var selectedItem: ClipboardHistoryItem? {
+        guard let id = selectedItemId else { return nil }
+        return historyManager.items.first { $0.id == id }
+    }
+    
     var body: some View {
+        HStack(spacing: 0) {
+            detailPanel
+            Divider()
+            listPanel
+        }
+        .frame(width: 650, height: 400)
+        .onAppear {
+            searchFieldFocused = true
+            if selectedItemId == nil, let first = historyManager.filteredItems.first {
+                selectedItemId = first.id
+            }
+        }
+        .onExitCommand {
+            dismiss()
+        }
+    }
+    
+    private var detailPanel: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if let item = selectedItem {
+                ScrollView {
+                    Text(item.content)
+                        .font(.system(.body, design: .monospaced))
+                        .textSelection(.enabled)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                }
+                .frame(maxHeight: .infinity)
+                
+                Divider()
+                
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: item.isFromTerminal ? "terminal" : "app")
+                            .foregroundStyle(item.isFromTerminal ? .blue : .secondary)
+                        Text("Application: ")
+                            .foregroundStyle(.secondary)
+                        Text(item.sourceDisplayName)
+                        if item.isFromTerminal {
+                            Text("(recognized)")
+                                .foregroundStyle(.secondary)
+                                .font(.caption)
+                        }
+                    }
+                    
+                    HStack {
+                        Text("First copy time:")
+                            .foregroundStyle(.secondary)
+                        Text(item.firstCopyDate.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    
+                    HStack {
+                        Text("Last copy time:")
+                            .foregroundStyle(.secondary)
+                        Text(item.lastCopyDate.formatted(date: .abbreviated, time: .shortened))
+                    }
+                    
+                    HStack {
+                        Text("Number of copies:")
+                            .foregroundStyle(.secondary)
+                        Text("\(item.copyCount)")
+                    }
+                    
+                    Divider()
+                    
+                    HStack(spacing: 16) {
+                        Text("Press Delete to remove.")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                        Text("Right-click for more options.")
+                            .font(.caption)
+                            .foregroundStyle(.tertiary)
+                    }
+                }
+                .font(.caption)
+                .padding()
+                .background(.ultraThinMaterial)
+            } else {
+                VStack {
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.tertiary)
+                    Text("Select an item to preview")
+                        .foregroundStyle(.secondary)
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
+        }
+        .frame(width: 280)
+    }
+    
+    private var listPanel: some View {
         VStack(spacing: 0) {
             searchBar
             Divider()
@@ -18,13 +115,6 @@ struct HistoryPanelView: View {
             } else {
                 historyList
             }
-        }
-        .frame(width: 400, height: 450)
-        .onAppear {
-            searchFieldFocused = true
-        }
-        .onExitCommand {
-            dismiss()
         }
     }
     
@@ -95,9 +185,21 @@ struct HistoryPanelView: View {
         .listStyle(.plain)
         .scrollContentBackground(.hidden)
         .onKeyPress(.return) {
-            if let id = selectedItemId, let item = historyManager.items.first(where: { $0.id == id }) {
+            if let item = selectedItem {
                 monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
                 dismiss()
+                return .handled
+            }
+            return .ignored
+        }
+        .onKeyPress(.delete) {
+            if let id = selectedItemId {
+                historyManager.removeItem(id)
+                if let first = historyManager.filteredItems.first {
+                    selectedItemId = first.id
+                } else {
+                    selectedItemId = nil
+                }
                 return .handled
             }
             return .ignored
@@ -189,5 +291,3 @@ struct HistoryItemRow: View {
         }
     }
 }
-
-
