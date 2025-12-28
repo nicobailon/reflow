@@ -43,17 +43,21 @@ struct ReflowApp: App {
     
     var body: some Scene {
         MenuBarExtra {
-            MenuContentView(
-                monitor: monitor,
+            PopoverPanelView(
                 settings: settings,
+                historyManager: historyManager,
+                monitor: monitor,
                 accessibilityManager: accessibilityManager,
                 statisticsManager: statisticsManager,
-                historyManager: historyManager
+                updater: updaterController.updater,
+                dismiss: { isMenuPresented = false }
             )
-            Divider()
-            CheckForUpdatesView(updater: updaterController.updater)
-            Button("Quit") { NSApplication.shared.terminate(nil) }
-            HistoryWindowOpener()
+            .onReceive(NotificationCenter.default.publisher(for: .togglePopover)) { _ in
+                isMenuPresented.toggle()
+                if isMenuPresented {
+                    NSApp.activate(ignoringOtherApps: true)
+                }
+            }
         } label: {
             StatusLabel(
                 monitor: monitor,
@@ -64,7 +68,7 @@ struct ReflowApp: App {
             statusItem = item
             applyStatusItemAppearance()
         }
-        .menuBarExtraStyle(.menu)
+        .menuBarExtraStyle(.window)
         .onChange(of: settings.autoReflowEnabled) { _, _ in
             applyStatusItemAppearance()
         }
@@ -72,13 +76,6 @@ struct ReflowApp: App {
         Settings {
             SettingsView(settings: settings, historyManager: historyManager, updater: updaterController.updater)
         }
-        
-        Window("Clipboard History", id: "history") {
-            HistoryPanelView(historyManager: historyManager, monitor: monitor)
-        }
-        .windowStyle(.hiddenTitleBar)
-        .windowResizability(.contentSize)
-        .defaultPosition(.center)
     }
     
     private func applyStatusItemAppearance() {
@@ -86,54 +83,9 @@ struct ReflowApp: App {
     }
 }
 
-struct HistoryWindowOpener: View {
-    @Environment(\.openWindow) private var openWindow
-    
-    var body: some View {
-        Color.clear
-            .frame(width: 0, height: 0)
-            .onReceive(NotificationCenter.default.publisher(for: .showHistoryPanel)) { _ in
-                openWindow(id: "history")
-            }
-    }
-}
-
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-    }
-}
-
-struct CheckForUpdatesView: View {
-    @ObservedObject private var checkForUpdatesViewModel: CheckForUpdatesViewModel
-    
-    init(updater: SPUUpdater) {
-        self.checkForUpdatesViewModel = CheckForUpdatesViewModel(updater: updater)
-    }
-    
-    var body: some View {
-        Button("Check for Updates...") {
-            checkForUpdatesViewModel.checkForUpdates()
-        }
-        .disabled(!checkForUpdatesViewModel.canCheckForUpdates)
-    }
-}
-
-@MainActor
-final class CheckForUpdatesViewModel: ObservableObject {
-    @Published var canCheckForUpdates = false
-    
-    private let updater: SPUUpdater
-    private var cancellable: Any?
-    
-    init(updater: SPUUpdater) {
-        self.updater = updater
-        cancellable = updater.publisher(for: \.canCheckForUpdates)
-            .assign(to: \.canCheckForUpdates, on: self)
-    }
-    
-    func checkForUpdates() {
-        updater.checkForUpdates()
     }
 }

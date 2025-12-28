@@ -2,7 +2,7 @@ import SwiftUI
 @preconcurrency import KeyboardShortcuts
 
 extension Notification.Name {
-    static let showHistoryPanel = Notification.Name("showHistoryPanel")
+    static let togglePopover = Notification.Name("togglePopover")
 }
 
 extension KeyboardShortcuts.Name {
@@ -101,8 +101,7 @@ final class HotkeyManager: ObservableObject {
         
         KeyboardShortcuts.onKeyUp(for: .showHistory) {
             Task { @MainActor in
-                NSApp.activate(ignoringOtherApps: true)
-                NotificationCenter.default.post(name: .showHistoryPanel, object: nil)
+                NotificationCenter.default.post(name: .togglePopover, object: nil)
             }
         }
         
