@@ -19,15 +19,24 @@ When you copy text from a terminal, it often contains hard line breaks at 80 or 
 
 ## Features
 
-- **Clipboard history** with Maccy-style popover panel (split-view with detail preview)
+- **Clipboard history** with split-view popover (detail preview + searchable list)
 - **Pin items** to keep them at the top of history
 - **Search** history in real-time
 - **Markdown-aware** mode preserves headers, code fences, blockquotes, and tables
-- **Three aggressiveness levels:** Conservative (preserves punctuation), Normal (default), Aggressive (joins everything)
 - **Custom patterns** via regex to preserve specific lines
 - **Statistics** tracking (session + all-time)
 - **Global hotkeys** for all actions
 - **CLI tool** (`reflow-cli`) for scripting
+
+## Aggressiveness Levels
+
+Controls how aggressively Reflow joins wrapped lines:
+
+| Level | Behavior | Best for |
+|-------|----------|----------|
+| **Conservative** | Preserves lines ending with `.` `!` `?` `:` or other punctuation. Only joins lines that appear mid-sentence. | Mixed content with prose and code |
+| **Normal** | Joins most lines, but preserves obvious paragraph boundaries and special patterns. | General terminal output (default) |
+| **Aggressive** | Joins everything except blank lines and markdown structures. | Heavily wrapped text that needs maximum cleanup |
 
 ## Keyboard Shortcuts
 
