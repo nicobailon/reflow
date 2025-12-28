@@ -59,6 +59,8 @@ struct PopoverPanelView: View {
                 }
                 .frame(maxHeight: .infinity)
                 
+                Divider()
+                
                 VStack(alignment: .leading, spacing: 0) {
                     Button {
                         withAnimation(.easeInOut(duration: 0.2)) {
@@ -222,11 +224,15 @@ struct PopoverPanelView: View {
         }
         .onKeyPress(.delete) {
             if let id = selectedItemId {
+                let items = historyManager.filteredItems
+                let currentIndex = items.firstIndex { $0.id == id }
                 historyManager.removeItem(id)
-                if let first = historyManager.filteredItems.first {
-                    selectedItemId = first.id
+                let updatedItems = historyManager.filteredItems
+                if let idx = currentIndex, !updatedItems.isEmpty {
+                    let nextIndex = min(idx, updatedItems.count - 1)
+                    selectedItemId = updatedItems[nextIndex].id
                 } else {
-                    selectedItemId = nil
+                    selectedItemId = updatedItems.first?.id
                 }
                 return .handled
             }
