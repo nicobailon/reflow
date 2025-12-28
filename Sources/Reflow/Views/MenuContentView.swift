@@ -7,6 +7,7 @@ struct MenuContentView: View {
     @ObservedObject var settings: AppSettings
     @ObservedObject var accessibilityManager: AccessibilityManager
     @ObservedObject var statisticsManager: StatisticsManager
+    @ObservedObject var historyManager: ClipboardHistoryManager
     @Environment(\.openSettings) private var openSettings
     
     var body: some View {
@@ -78,6 +79,36 @@ struct MenuContentView: View {
         }
         
         Divider()
+        
+        if historyManager.historyEnabled {
+            Menu("History") {
+                if historyManager.items.isEmpty {
+                    Text("No history yet")
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(Array(historyManager.items.prefix(9).enumerated()), id: \.element.id) { index, item in
+                        Button {
+                            monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
+                        } label: {
+                            HStack {
+                                if item.isFromTerminal {
+                                    Image(systemName: "terminal")
+                                }
+                                Text(item.preview)
+                                Spacer()
+                                Text(item.relativeTimestamp)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
+                    }
+                    Divider()
+                    Button("Clear History") {
+                        historyManager.clear()
+                    }
+                }
+            }
+        }
         
         Menu("Statistics") {
             Text("Session: \(statisticsManager.sessionLinesJoined) lines, \(statisticsManager.sessionPastes) pastes")

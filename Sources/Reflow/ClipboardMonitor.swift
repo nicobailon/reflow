@@ -7,6 +7,7 @@ import ReflowCore
 final class ClipboardMonitor: ObservableObject {
     private let settings: AppSettings
     private let statisticsManager: StatisticsManager
+    private let historyManager: ClipboardHistoryManager
     private let pasteboard: NSPasteboard
     private let reflowMarker = NSPasteboard.PasteboardType("com.reflow.marker")
     private let accessibilityPermission: AccessibilityPermissionChecking
@@ -31,6 +32,7 @@ final class ClipboardMonitor: ObservableObject {
     init(
         settings: AppSettings,
         statisticsManager: StatisticsManager,
+        historyManager: ClipboardHistoryManager,
         pasteboard: NSPasteboard = .general,
         pasteRestoreDelay: DispatchTimeInterval = .milliseconds(200),
         pasteAction: (() -> Void)? = nil,
@@ -38,6 +40,7 @@ final class ClipboardMonitor: ObservableObject {
     ) {
         self.settings = settings
         self.statisticsManager = statisticsManager
+        self.historyManager = historyManager
         self.pasteboard = pasteboard
         self.pasteRestoreDelay = pasteRestoreDelay
         self.pasteIntoFrontmostApp = pasteAction ?? ClipboardMonitor.sendPasteCommand
@@ -80,6 +83,7 @@ final class ClipboardMonitor: ObservableObject {
         }
         
         captureSourceOnClipboardChange()
+        addToHistoryIfNeeded()
         
         let observed = current
         DispatchQueue.main.asyncAfter(deadline: .now() + graceDelay) { [weak self] in
@@ -87,6 +91,11 @@ final class ClipboardMonitor: ObservableObject {
             _ = reflowClipboardIfNeeded()
             lastSeenChangeCount = pasteboard.changeCount
         }
+    }
+    
+    private func addToHistoryIfNeeded() {
+        guard let text = readTextFromPasteboard(ignoreMarker: true) else { return }
+        historyManager.addItem(text, source: lastCopySource)
     }
     
     @discardableResult
@@ -305,6 +314,40 @@ extension ClipboardMonitor {
     
     func originalPreviewSource() -> String? {
         lastOriginalText
+    }
+    
+    @discardableResult
+    func pasteFromHistory(item: ClipboardHistoryItem, reflow: Bool) -> Bool {
+        guard accessibilityPermission.isTrusted else {
+            lastSummary = Self.accessibilityPermissionMessage
+            return false
+        }
+        
+        if reflow && item.isReflowCandidate {
+            let result = ReflowEngine.reflow(item.content, options: settings.reflowOptions)
+            if result.wasTransformed {
+                cache(original: item.content, reflowed: result.reflowed)
+                updateSummary(with: result.reflowed)
+                registerReflowEvent()
+                statisticsManager.recordPaste(linesJoined: result.linesJoined)
+                performPaste(with: result.reflowed)
+                return true
+            }
+        }
+        
+        cache(original: item.content, reflowed: nil)
+        updateSummary(with: item.content)
+        performPaste(with: item.content)
+        return true
+    }
+    
+    @discardableResult
+    func pasteFromHistoryIndex(_ index: Int, reflow: Bool = true) -> Bool {
+        guard let item = historyManager.item(at: index) else {
+            lastSummary = "No item at index \(index + 1)"
+            return false
+        }
+        return pasteFromHistory(item: item, reflow: reflow)
     }
     
     private func performPaste(with text: String) {

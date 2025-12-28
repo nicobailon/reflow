@@ -9,6 +9,7 @@ struct ReflowApp: App {
     @StateObject private var settings: AppSettings
     @StateObject private var accessibilityManager: AccessibilityManager
     @StateObject private var statisticsManager: StatisticsManager
+    @StateObject private var historyManager: ClipboardHistoryManager
     @StateObject private var monitor: ClipboardMonitor
     @StateObject private var hotkeyManager: HotkeyManager
     @State private var isMenuPresented = false
@@ -20,17 +21,20 @@ struct ReflowApp: App {
         let settings = AppSettings()
         let accessibilityManager = AccessibilityManager()
         let statisticsManager = StatisticsManager()
+        let historyManager = ClipboardHistoryManager()
         let monitor = ClipboardMonitor(
             settings: settings,
             statisticsManager: statisticsManager,
+            historyManager: historyManager,
             accessibilityPermission: accessibilityManager
         )
         monitor.start()
-        let hotkeyManager = HotkeyManager(settings: settings, monitor: monitor)
+        let hotkeyManager = HotkeyManager(settings: settings, monitor: monitor, historyManager: historyManager)
         
         _settings = StateObject(wrappedValue: settings)
         _accessibilityManager = StateObject(wrappedValue: accessibilityManager)
         _statisticsManager = StateObject(wrappedValue: statisticsManager)
+        _historyManager = StateObject(wrappedValue: historyManager)
         _monitor = StateObject(wrappedValue: monitor)
         _hotkeyManager = StateObject(wrappedValue: hotkeyManager)
         
@@ -43,7 +47,8 @@ struct ReflowApp: App {
                 monitor: monitor,
                 settings: settings,
                 accessibilityManager: accessibilityManager,
-                statisticsManager: statisticsManager
+                statisticsManager: statisticsManager,
+                historyManager: historyManager
             )
             Divider()
             CheckForUpdatesView(updater: updaterController.updater)
