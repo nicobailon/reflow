@@ -1,0 +1,90 @@
+import SwiftUI
+@preconcurrency import KeyboardShortcuts
+
+extension KeyboardShortcuts.Name {
+    @MainActor static let pasteReflowed = Self("pasteReflowed")
+    @MainActor static let pasteOriginal = Self("pasteOriginal")
+    @MainActor static let toggleAutoReflow = Self("toggleAutoReflow")
+    @MainActor static let pasteConservative = Self("pasteConservative")
+    @MainActor static let pasteAggressive = Self("pasteAggressive")
+}
+
+enum DefaultShortcuts {
+    @MainActor static let pasteReflowed = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .control])
+    @MainActor static let pasteOriginal = KeyboardShortcuts.Shortcut(.v, modifiers: [.command, .control, .shift])
+    @MainActor static let toggleAutoReflow = KeyboardShortcuts.Shortcut(.r, modifiers: [.command, .control])
+    @MainActor static let pasteConservative: KeyboardShortcuts.Shortcut? = nil
+    @MainActor static let pasteAggressive: KeyboardShortcuts.Shortcut? = nil
+}
+
+@MainActor
+final class HotkeyManager: ObservableObject {
+    private let monitor: ClipboardMonitor
+    private let settings: AppSettings
+    private var handlersRegistered = false
+    
+    init(settings: AppSettings, monitor: ClipboardMonitor) {
+        self.settings = settings
+        self.monitor = monitor
+        ensureDefaultShortcuts()
+        registerHandlers()
+    }
+    
+    private func ensureDefaultShortcuts() {
+        if KeyboardShortcuts.getShortcut(for: .pasteReflowed) == nil {
+            KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteReflowed, for: .pasteReflowed)
+        }
+        if KeyboardShortcuts.getShortcut(for: .pasteOriginal) == nil {
+            KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteOriginal, for: .pasteOriginal)
+        }
+        if KeyboardShortcuts.getShortcut(for: .toggleAutoReflow) == nil {
+            KeyboardShortcuts.setShortcut(DefaultShortcuts.toggleAutoReflow, for: .toggleAutoReflow)
+        }
+    }
+    
+    private func registerHandlers() {
+        guard !handlersRegistered else { return }
+        
+        KeyboardShortcuts.onKeyUp(for: .pasteReflowed) { [weak self] in
+            Task { @MainActor in
+                self?.monitor.pasteReflowed()
+            }
+        }
+        
+        KeyboardShortcuts.onKeyUp(for: .pasteOriginal) { [weak self] in
+            Task { @MainActor in
+                self?.monitor.pasteOriginal()
+            }
+        }
+        
+        KeyboardShortcuts.onKeyUp(for: .toggleAutoReflow) { [weak self] in
+            Task { @MainActor in
+                self?.settings.autoReflowEnabled.toggle()
+            }
+        }
+        
+        KeyboardShortcuts.onKeyUp(for: .pasteConservative) { [weak self] in
+            Task { @MainActor in
+                self?.monitor.pasteReflowed(aggressiveness: .conservative)
+            }
+        }
+        
+        KeyboardShortcuts.onKeyUp(for: .pasteAggressive) { [weak self] in
+            Task { @MainActor in
+                self?.monitor.pasteReflowed(aggressiveness: .aggressive)
+            }
+        }
+        
+        handlersRegistered = true
+    }
+    
+    @discardableResult
+    func pasteReflowedNow() -> Bool {
+        monitor.pasteReflowed()
+    }
+    
+    @discardableResult
+    func pasteOriginalNow() -> Bool {
+        monitor.pasteOriginal()
+    }
+}

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <channel>
+        <title>Reflow Updates</title>
+        <link>https://github.com/OWNER/reflow</link>
+        <description>Most recent updates to Reflow</description>
+        <language>en</language>
+        
+        <item>
+            <title>Version 0.2.0</title>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>0.2.0</sparkle:shortVersionString>
+            <sparkle:minimumSystemVersion>15.0</sparkle:minimumSystemVersion>
+            <pubDate>Sat, 28 Dec 2025 00:00:00 +0000</pubDate>
+            <description><![CDATA[
+                <h2>What's New in 0.2.0</h2>
+                <ul>
+                    <li>Terminal width auto-detection</li>
+                    <li>VS Code/Cursor content heuristics</li>
+                    <li>Full settings UI with tabs</li>
+                    <li>CLI tool (reflow-cli)</li>
+                    <li>Quick paste with aggressiveness override</li>
+                </ul>
+            ]]></description>
+            <enclosure 
+                url="https://github.com/OWNER/reflow/releases/download/v0.2.0/Reflow-0.2.0.dmg"
+                sparkle:edSignature="PLACEHOLDER_SIGNATURE"
+                length="PLACEHOLDER_LENGTH"
+                type="application/octet-stream" />
+        </item>
+        
+    </channel>
+</rss>
