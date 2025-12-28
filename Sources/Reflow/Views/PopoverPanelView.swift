@@ -247,13 +247,13 @@ struct PopoverPanelView: View {
                 .frame(height: 16)
             
             Picker("", selection: $settings.aggressiveness) {
-                Text("C").tag(Aggressiveness.conservative)
-                Text("N").tag(Aggressiveness.normal)
-                Text("A").tag(Aggressiveness.aggressive)
+                Text("Conservative").tag(Aggressiveness.conservative)
+                Text("Normal").tag(Aggressiveness.normal)
+                Text("Aggressive").tag(Aggressiveness.aggressive)
             }
             .pickerStyle(.segmented)
-            .frame(width: 80)
-            .help("Conservative / Normal / Aggressive")
+            .frame(width: 240)
+            .help("How aggressively to join wrapped lines")
             
             Toggle("MD", isOn: $settings.markdownAware)
                 .toggleStyle(.button)
