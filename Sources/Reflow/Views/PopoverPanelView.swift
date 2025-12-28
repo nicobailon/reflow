@@ -26,7 +26,7 @@ struct PopoverPanelView: View {
             Divider()
             bottomToolbar
         }
-        .frame(width: 650, height: 450)
+        .frame(width: 750, height: 450)
         .onAppear {
             searchFieldFocused = true
             if selectedItemId == nil, let first = historyManager.filteredItems.first {
@@ -247,18 +247,18 @@ struct PopoverPanelView: View {
                 .frame(height: 16)
             
             Picker("", selection: $settings.aggressiveness) {
-                Text("C").tag(Aggressiveness.conservative)
-                Text("N").tag(Aggressiveness.normal)
-                Text("A").tag(Aggressiveness.aggressive)
+                Text("Conserv").tag(Aggressiveness.conservative)
+                Text("Normal").tag(Aggressiveness.normal)
+                Text("Aggress").tag(Aggressiveness.aggressive)
             }
             .pickerStyle(.segmented)
-            .frame(width: 80)
-            .help("Line joining: Conservative / Normal / Aggressive")
+            .font(.caption)
+            .frame(width: 180)
             
-            Toggle("MD", isOn: $settings.markdownAware)
+            Toggle("Markdown", isOn: $settings.markdownAware)
                 .toggleStyle(.button)
+                .font(.caption)
                 .controlSize(.small)
-                .help("Markdown-Aware Mode")
             
             Divider()
                 .frame(height: 16)
