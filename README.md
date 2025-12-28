@@ -1,39 +1,45 @@
 # Reflow
 
-A macOS menu bar utility that unwraps hard-wrapped terminal text.
+macOS 15+ menu bar utility that unwraps hard-wrapped terminal text. Detects clipboard copies from terminal apps and provides smart paste options with line wrapping removed, while preserving paragraph breaks, code blocks, and lists.
 
-When you copy text from a terminal, it often contains hard line breaks at 80 or 120 characters. Reflow detects terminal copies and lets you paste the text with line wrapping removed, while preserving paragraph breaks, code blocks, and lists.
+## Install
+
+- Download from GitHub Releases: (coming soon)
+- Or build from source (see Build section below)
+
+## How it works
+
+When you copy text from a terminal, it often contains hard line breaks at 80 or 120 characters. Reflow detects these terminal copies and lets you paste with the wrapping removed.
+
+**Recognized terminals:** Terminal.app, iTerm2, Ghostty, Warp, Kitty, Alacritty, Hyper, WezTerm
+
+**Mixed-source detection:** VS Code, Cursor, Zed (detects terminal output from integrated terminals)
 
 ## Features
 
-- **Auto-detection** - Recognizes copies from Terminal.app, iTerm2, Ghostty, Warp, Kitty, Alacritty, Hyper, and WezTerm
-- **Smart heuristics** - Detects terminal output from VS Code, Cursor, and Zed integrated terminals
-- **Markdown-aware** - Preserves headers, code fences, blockquotes, and tables
-- **Custom patterns** - Define regex patterns to preserve specific lines
-- **Statistics** - Track lines joined and paste counts (session + all-time)
-- **Global hotkeys** - Configurable keyboard shortcuts
-- **CLI tool** - Full-featured command-line interface
+- **Clipboard history** with Maccy-style popover panel (split-view with detail preview)
+- **Pin items** to keep them at the top of history
+- **Search** history in real-time
+- **Markdown-aware** mode preserves headers, code fences, blockquotes, and tables
+- **Three aggressiveness levels:** Conservative (preserves punctuation), Normal (default), Aggressive (joins everything)
+- **Custom patterns** via regex to preserve specific lines
+- **Statistics** tracking (session + all-time)
+- **Global hotkeys** for all actions
+- **CLI tool** (`reflow-cli`) for scripting
 
-## Usage
-
-### Menu Bar
-
-Click the Reflow icon in the menu bar to:
-- Toggle auto-reflow on/off
-- Choose aggressiveness level (Conservative, Normal, Aggressive)
-- Toggle markdown-aware mode
-- View source app detection
-- Access paste actions
-- View statistics
-
-### Keyboard Shortcuts
+## Keyboard Shortcuts
 
 Default shortcuts (configurable in Settings):
-- **Cmd+Ctrl+V** - Paste Reflowed
-- **Cmd+Ctrl+Shift+V** - Paste Original
-- **Cmd+Ctrl+R** - Toggle Auto-Reflow
 
-### CLI
+| Action | Shortcut |
+|--------|----------|
+| Paste Reflowed | Cmd+Ctrl+V |
+| Paste Original | Cmd+Ctrl+Shift+V |
+| Toggle Auto-Reflow | Cmd+Ctrl+R |
+| Show History Panel | Cmd+Ctrl+H |
+| Quick Paste 1-9 | Cmd+1 through Cmd+9 |
+
+## CLI
 
 ```bash
 # Basic usage (stdin)
@@ -44,11 +50,7 @@ reflow-cli --file input.txt
 
 # With options
 reflow-cli -a conservative --stats
-
-# Markdown mode
 reflow-cli --no-markdown
-
-# Custom patterns
 reflow-cli --pattern "^TODO:" --pattern "^FIXME:"
 
 # Analysis tools
@@ -56,16 +58,10 @@ reflow-cli --analyze-width
 reflow-cli --check-terminal
 ```
 
-## Aggressiveness Levels
-
-- **Conservative** - Preserves lines ending with punctuation. Best for mixed content.
-- **Normal** - Joins most lines, preserves obvious boundaries. Default.
-- **Aggressive** - Joins everything except blank lines and special patterns.
-
 ## Build
 
 ```bash
-swift build
+swift build -c release
 swift test
 ```
 
@@ -73,6 +69,10 @@ swift test
 
 - macOS 15.0+
 - Accessibility permission (for paste injection)
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
