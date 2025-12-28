@@ -199,7 +199,7 @@ final class ClipboardMonitor: ObservableObject {
         let tailCount = available - headCount
         let head = text.prefix(headCount)
         let tail = text.suffix(tailCount)
-        return "\(head)...\(tail)"
+        return "\(head)…\(tail)"
     }
     
     private func normalizeLineEndings(_ text: String) -> String {
