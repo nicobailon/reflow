@@ -92,6 +92,10 @@ struct MenuContentView: View {
                             monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
                         } label: {
                             HStack {
+                                if item.isPinned {
+                                    Image(systemName: "pin.fill")
+                                        .foregroundStyle(.orange)
+                                }
                                 if item.isFromTerminal {
                                     Image(systemName: "terminal")
                                 }
@@ -102,6 +106,7 @@ struct MenuContentView: View {
                             }
                         }
                         .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
+                        .help(item.content.prefix(500) + (item.content.count > 500 ? "..." : ""))
                     }
                     Divider()
                     Button("Show All History...") {
