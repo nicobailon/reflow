@@ -274,8 +274,8 @@ extension ClipboardMonitor {
         }
         let result = ReflowEngine.reflow(original, options: options)
         guard result.wasTransformed else {
-            lastSummary = "Nothing to reflow."
-            return false
+            performPaste(with: original)
+            return true
         }
         
         cache(original: original, reflowed: result.reflowed)
@@ -361,6 +361,7 @@ extension ClipboardMonitor {
         
         let changeCountAtPaste = pasteboard.changeCount
         
+        NSApp.deactivate()
         pasteIntoFrontmostApp()
         
         guard let previousString else { return }

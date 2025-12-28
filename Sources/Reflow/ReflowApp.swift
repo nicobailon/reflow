@@ -14,6 +14,7 @@ struct ReflowApp: App {
     @StateObject private var hotkeyManager: HotkeyManager
     @State private var isMenuPresented = false
     @State private var statusItem: NSStatusItem?
+    @State private var hasActivatedOnce = false
     
     private let updaterController: SPUStandardUpdaterController
     
@@ -58,6 +59,13 @@ struct ReflowApp: App {
                     NSApp.activate(ignoringOtherApps: true)
                 }
             }
+            .onReceive(NotificationCenter.default.publisher(for: .pasteHistoryItem)) { notification in
+                if let userInfo = notification.userInfo,
+                   let item = userInfo["item"] as? ClipboardHistoryItem,
+                   let reflow = userInfo["reflow"] as? Bool {
+                    monitor.pasteFromHistory(item: item, reflow: reflow)
+                }
+            }
         } label: {
             StatusLabel(
                 monitor: monitor,
@@ -67,6 +75,16 @@ struct ReflowApp: App {
         .menuBarExtraAccess(isPresented: $isMenuPresented) { item in
             statusItem = item
             applyStatusItemAppearance()
+            
+            if !hasActivatedOnce {
+                hasActivatedOnce = true
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    isMenuPresented = true
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
+                        isMenuPresented = false
+                    }
+                }
+            }
         }
         .menuBarExtraStyle(.window)
         .onChange(of: settings.autoReflowEnabled) { _, _ in

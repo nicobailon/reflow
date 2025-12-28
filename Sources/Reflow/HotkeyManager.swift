@@ -3,6 +3,7 @@ import SwiftUI
 
 extension Notification.Name {
     static let togglePopover = Notification.Name("togglePopover")
+    static let pasteHistoryItem = Notification.Name("pasteHistoryItem")
 }
 
 extension KeyboardShortcuts.Name {

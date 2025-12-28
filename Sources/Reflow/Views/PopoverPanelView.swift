@@ -14,7 +14,9 @@ struct PopoverPanelView: View {
     @Environment(\.openSettings) private var openSettings
     @State private var selectedItemId: UUID?
     @State private var showDetails = false
-    @FocusState private var searchFieldFocused: Bool
+    @FocusState private var isListFocused: Bool
+    @State private var eventMonitor: Any?
+    @State private var scrollProxy: ScrollViewProxy?
     
     private var selectedItem: ClipboardHistoryItem? {
         guard let id = selectedItemId else { return nil }
@@ -29,9 +31,18 @@ struct PopoverPanelView: View {
         }
         .frame(width: 650, height: 420)
         .onAppear {
-            searchFieldFocused = true
             if selectedItemId == nil, let first = historyManager.filteredItems.first {
                 selectedItemId = first.id
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                isListFocused = true
+            }
+            setupKeyboardMonitor()
+        }
+        .onDisappear {
+            if let monitor = eventMonitor {
+                NSEvent.removeMonitor(monitor)
+                eventMonitor = nil
             }
         }
         .onExitCommand {
@@ -42,6 +53,47 @@ struct PopoverPanelView: View {
             if let id = selectedItemId, !filtered.contains(where: { $0.id == id }) {
                 selectedItemId = filtered.first?.id
             }
+        }
+        .onChange(of: selectedItemId) { _, newId in
+            if let id = newId, let proxy = scrollProxy {
+                proxy.scrollTo(id, anchor: .center)
+            }
+        }
+    }
+    
+    private func setupKeyboardMonitor() {
+        eventMonitor = NSEvent.addLocalMonitorForEvents(matching: .keyDown) { event in
+            switch event.keyCode {
+            case 36: // Return
+                if let item = self.selectedItem {
+                    self.dismiss()
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                        NotificationCenter.default.post(
+                            name: .pasteHistoryItem,
+                            object: nil,
+                            userInfo: ["item": item, "reflow": item.isReflowCandidate]
+                        )
+                    }
+                    return nil
+                }
+            case 51: // Delete
+                if let id = self.selectedItemId {
+                    let items = self.historyManager.filteredItems
+                    let currentIndex = items.firstIndex { $0.id == id }
+                    self.historyManager.removeItem(id)
+                    let updatedItems = self.historyManager.filteredItems
+                    if let idx = currentIndex, !updatedItems.isEmpty {
+                        let nextIndex = min(idx, updatedItems.count - 1)
+                        self.selectedItemId = updatedItems[nextIndex].id
+                    } else {
+                        self.selectedItemId = updatedItems.first?.id
+                    }
+                    return nil
+                }
+            default:
+                break
+            }
+            return event
         }
     }
     
@@ -160,7 +212,7 @@ struct PopoverPanelView: View {
                 .foregroundStyle(.secondary)
             TextField("Search history...", text: $historyManager.searchQuery)
                 .textFieldStyle(.plain)
-                .focused($searchFieldFocused)
+
             if !historyManager.searchQuery.isEmpty {
                 Button {
                     historyManager.searchQuery = ""
@@ -198,68 +250,42 @@ struct PopoverPanelView: View {
     }
     
     private var historyList: some View {
-        List(selection: $selectedItemId) {
-            ForEach(Array(historyManager.filteredItems.enumerated()), id: \.element.id) { index, item in
-                PopoverHistoryItemRow(
-                    item: item,
-                    index: index,
-                    isSelected: selectedItemId == item.id,
-                    onPaste: { reflow in
-                        monitor.pasteFromHistory(item: item, reflow: reflow)
-                        dismiss()
-                    },
-                    onTogglePin: {
-                        historyManager.togglePin(item.id)
-                    },
-                    onDelete: {
-                        historyManager.removeItem(item.id)
+        ScrollViewReader { proxy in
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(Array(historyManager.filteredItems.enumerated()), id: \.element.id) { index, item in
+                        PopoverHistoryItemRow(
+                            item: item,
+                            index: index,
+                            isSelected: selectedItemId == item.id,
+                            onPaste: { reflow in
+                                dismiss()
+                                DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                                    monitor.pasteFromHistory(item: item, reflow: reflow)
+                                }
+                            },
+                            onTogglePin: {
+                                historyManager.togglePin(item.id)
+                            },
+                            onDelete: {
+                                historyManager.removeItem(item.id)
+                            }
+                        )
+                        .id(item.id)
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 2)
+                        .onTapGesture {
+                            selectedItemId = item.id
+                        }
                     }
-                )
-                .tag(item.id)
-            }
-        }
-        .listStyle(.plain)
-        .scrollContentBackground(.hidden)
-        .onKeyPress(.return) {
-            if let item = selectedItem {
-                monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
-                dismiss()
-                return .handled
-            }
-            return .ignored
-        }
-        .onKeyPress(.delete) {
-            if let id = selectedItemId {
-                let items = historyManager.filteredItems
-                let currentIndex = items.firstIndex { $0.id == id }
-                historyManager.removeItem(id)
-                let updatedItems = historyManager.filteredItems
-                if let idx = currentIndex, !updatedItems.isEmpty {
-                    let nextIndex = min(idx, updatedItems.count - 1)
-                    selectedItemId = updatedItems[nextIndex].id
-                } else {
-                    selectedItemId = updatedItems.first?.id
                 }
-                return .handled
+                .padding(.vertical, 4)
             }
-            return .ignored
+            .onAppear {
+                scrollProxy = proxy
+            }
         }
-        .onKeyPress(characters: .decimalDigits) { press in
-            guard press.modifiers.contains(.command),
-                  let char = press.characters.first,
-                  let digit = Int(String(char)),
-                  digit >= 1 && digit <= 9 else {
-                return .ignored
-            }
-            let itemIndex = digit - 1
-            if itemIndex < historyManager.filteredItems.count {
-                let item = historyManager.filteredItems[itemIndex]
-                monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
-                dismiss()
-                return .handled
-            }
-            return .ignored
-        }
+        .focused($isListFocused)
     }
     
     private var bottomToolbar: some View {
@@ -389,7 +415,7 @@ struct PopoverHistoryItemRow: View {
         .padding(.horizontal, 4)
         .background(
             RoundedRectangle(cornerRadius: 6)
-                .fill(isHovering && !isSelected ? Color.primary.opacity(0.08) : Color.clear)
+                .fill(isSelected ? Color.accentColor.opacity(0.3) : (isHovering ? Color.primary.opacity(0.08) : Color.clear))
         )
         .contentShape(Rectangle())
         .onHover { hovering in
