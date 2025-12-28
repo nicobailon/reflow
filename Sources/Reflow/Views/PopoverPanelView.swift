@@ -18,7 +18,7 @@ struct PopoverPanelView: View {
     
     private var selectedItem: ClipboardHistoryItem? {
         guard let id = selectedItemId else { return nil }
-        return historyManager.items.first { $0.id == id }
+        return historyManager.filteredItems.first { $0.id == id }
     }
     
     var body: some View {
