@@ -9,6 +9,7 @@ struct MenuContentView: View {
     @ObservedObject var statisticsManager: StatisticsManager
     @ObservedObject var historyManager: ClipboardHistoryManager
     @Environment(\.openSettings) private var openSettings
+    @Environment(\.openWindow) private var openWindow
     
     var body: some View {
         Toggle("Auto-Reflow", isOn: $settings.autoReflowEnabled)
@@ -102,6 +103,12 @@ struct MenuContentView: View {
                         }
                         .keyboardShortcut(KeyEquivalent(Character("\(index + 1)")), modifiers: .command)
                     }
+                    Divider()
+                    Button("Show All History...") {
+                        NSApp.activate(ignoringOtherApps: true)
+                        openWindow(id: "history")
+                    }
+                    .keyboardShortcut("h", modifiers: [.command, .control])
                     Divider()
                     Button("Clear History") {
                         historyManager.clear()

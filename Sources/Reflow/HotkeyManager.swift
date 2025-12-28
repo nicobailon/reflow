@@ -1,12 +1,17 @@
 import SwiftUI
 @preconcurrency import KeyboardShortcuts
 
+extension Notification.Name {
+    static let showHistoryPanel = Notification.Name("showHistoryPanel")
+}
+
 extension KeyboardShortcuts.Name {
     @MainActor static let pasteReflowed = Self("pasteReflowed")
     @MainActor static let pasteOriginal = Self("pasteOriginal")
     @MainActor static let toggleAutoReflow = Self("toggleAutoReflow")
     @MainActor static let pasteConservative = Self("pasteConservative")
     @MainActor static let pasteAggressive = Self("pasteAggressive")
+    @MainActor static let showHistory = Self("showHistory")
 }
 
 enum DefaultShortcuts {
@@ -15,6 +20,7 @@ enum DefaultShortcuts {
     @MainActor static let toggleAutoReflow = KeyboardShortcuts.Shortcut(.r, modifiers: [.command, .control])
     @MainActor static let pasteConservative: KeyboardShortcuts.Shortcut? = nil
     @MainActor static let pasteAggressive: KeyboardShortcuts.Shortcut? = nil
+    @MainActor static let showHistory = KeyboardShortcuts.Shortcut(.h, modifiers: [.command, .control])
 }
 
 @MainActor
@@ -39,6 +45,9 @@ final class HotkeyManager: ObservableObject {
         }
         if KeyboardShortcuts.getShortcut(for: .toggleAutoReflow) == nil {
             KeyboardShortcuts.setShortcut(DefaultShortcuts.toggleAutoReflow, for: .toggleAutoReflow)
+        }
+        if KeyboardShortcuts.getShortcut(for: .showHistory) == nil {
+            KeyboardShortcuts.setShortcut(DefaultShortcuts.showHistory, for: .showHistory)
         }
     }
     
@@ -72,6 +81,17 @@ final class HotkeyManager: ObservableObject {
         KeyboardShortcuts.onKeyUp(for: .pasteAggressive) { [weak self] in
             Task { @MainActor in
                 self?.monitor.pasteReflowed(aggressiveness: .aggressive)
+            }
+        }
+        
+        KeyboardShortcuts.onKeyUp(for: .showHistory) {
+            Task { @MainActor in
+                NSApp.activate(ignoringOtherApps: true)
+                if let window = NSApp.windows.first(where: { $0.identifier?.rawValue == "history" }) {
+                    window.makeKeyAndOrderFront(nil)
+                } else {
+                    NotificationCenter.default.post(name: .showHistoryPanel, object: nil)
+                }
             }
         }
         
