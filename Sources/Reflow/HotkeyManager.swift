@@ -12,6 +12,15 @@ extension KeyboardShortcuts.Name {
     @MainActor static let pasteConservative = Self("pasteConservative")
     @MainActor static let pasteAggressive = Self("pasteAggressive")
     @MainActor static let showHistory = Self("showHistory")
+    @MainActor static let pasteHistory1 = Self("pasteHistory1")
+    @MainActor static let pasteHistory2 = Self("pasteHistory2")
+    @MainActor static let pasteHistory3 = Self("pasteHistory3")
+    @MainActor static let pasteHistory4 = Self("pasteHistory4")
+    @MainActor static let pasteHistory5 = Self("pasteHistory5")
+    @MainActor static let pasteHistory6 = Self("pasteHistory6")
+    @MainActor static let pasteHistory7 = Self("pasteHistory7")
+    @MainActor static let pasteHistory8 = Self("pasteHistory8")
+    @MainActor static let pasteHistory9 = Self("pasteHistory9")
 }
 
 enum DefaultShortcuts {
@@ -28,6 +37,12 @@ final class HotkeyManager: ObservableObject {
     private let monitor: ClipboardMonitor
     private let settings: AppSettings
     private var handlersRegistered = false
+    
+    static let historyShortcutNames: [KeyboardShortcuts.Name] = [
+        .pasteHistory1, .pasteHistory2, .pasteHistory3,
+        .pasteHistory4, .pasteHistory5, .pasteHistory6,
+        .pasteHistory7, .pasteHistory8, .pasteHistory9
+    ]
     
     init(settings: AppSettings, monitor: ClipboardMonitor) {
         self.settings = settings
@@ -88,6 +103,14 @@ final class HotkeyManager: ObservableObject {
             Task { @MainActor in
                 NSApp.activate(ignoringOtherApps: true)
                 NotificationCenter.default.post(name: .showHistoryPanel, object: nil)
+            }
+        }
+        
+        for (index, name) in Self.historyShortcutNames.enumerated() {
+            KeyboardShortcuts.onKeyUp(for: name) { [weak self] in
+                Task { @MainActor in
+                    self?.monitor.pasteFromHistoryIndex(index)
+                }
             }
         }
         
