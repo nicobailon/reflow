@@ -263,13 +263,13 @@ struct PopoverPanelView: View {
             Divider()
                 .frame(height: 16)
             
-            if let source = monitor.currentClipboard?.sourceApp {
+            if let item = selectedItem {
                 HStack(spacing: 4) {
-                    Text("Source:")
+                    Text("Clipboard Source:")
                         .foregroundStyle(.secondary)
-                    Text(source.appName ?? "Unknown")
+                    Text(item.sourceDisplayName)
                         .lineLimit(1)
-                    if source.isRecognizedTerminal {
+                    if item.isFromTerminal {
                         Text("(terminal)")
                             .foregroundStyle(.blue)
                     }
