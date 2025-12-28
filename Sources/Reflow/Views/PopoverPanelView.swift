@@ -343,6 +343,8 @@ struct PopoverHistoryItemRow: View {
     let onTogglePin: () -> Void
     let onDelete: () -> Void
     
+    @State private var isHovering = false
+    
     var body: some View {
         HStack(spacing: 10) {
             Group {
@@ -396,7 +398,15 @@ struct PopoverHistoryItemRow: View {
             }
         }
         .padding(.vertical, 4)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isHovering && !isSelected ? Color.primary.opacity(0.08) : Color.clear)
+        )
         .contentShape(Rectangle())
+        .onHover { hovering in
+            isHovering = hovering
+        }
         .contextMenu {
             Button("Paste Reflowed") {
                 onPaste(true)
