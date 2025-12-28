@@ -3,11 +3,12 @@ import Sparkle
 
 struct SettingsView: View {
     @ObservedObject var settings: AppSettings
+    @ObservedObject var historyManager: ClipboardHistoryManager
     let updater: SPUUpdater
     
     var body: some View {
         TabView {
-            SettingsGeneralPane(settings: settings, updater: updater)
+            SettingsGeneralPane(settings: settings, historyManager: historyManager, updater: updater)
                 .tabItem {
                     Label("General", systemImage: "gear")
                 }

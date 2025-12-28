@@ -68,7 +68,6 @@ struct ClipboardHistoryItem: Codable, Identifiable, Sendable {
 final class ClipboardHistoryManager: ObservableObject {
     @AppStorage("clipboardHistory") private var historyData: Data = Data()
     @AppStorage("historyEnabled") var historyEnabled: Bool = true
-    @AppStorage("clearHistoryOnQuit") var clearHistoryOnQuit: Bool = false
     
     @Published private(set) var items: [ClipboardHistoryItem] = []
     @Published var searchQuery: String = ""
@@ -136,11 +135,5 @@ final class ClipboardHistoryManager: ObservableObject {
             return
         }
         items = decoded
-    }
-    
-    func clearIfNeeded() {
-        if clearHistoryOnQuit {
-            clear()
-        }
     }
 }

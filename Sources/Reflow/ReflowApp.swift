@@ -29,7 +29,7 @@ struct ReflowApp: App {
             accessibilityPermission: accessibilityManager
         )
         monitor.start()
-        let hotkeyManager = HotkeyManager(settings: settings, monitor: monitor, historyManager: historyManager)
+        let hotkeyManager = HotkeyManager(settings: settings, monitor: monitor)
         
         _settings = StateObject(wrappedValue: settings)
         _accessibilityManager = StateObject(wrappedValue: accessibilityManager)
@@ -69,7 +69,7 @@ struct ReflowApp: App {
         }
         
         Settings {
-            SettingsView(settings: settings, updater: updaterController.updater)
+            SettingsView(settings: settings, historyManager: historyManager, updater: updaterController.updater)
         }
     }
     
