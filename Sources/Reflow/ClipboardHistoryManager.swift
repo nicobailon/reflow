@@ -158,5 +158,6 @@ final class ClipboardHistoryManager: ObservableObject {
             return
         }
         items = decoded
+        sortItems()
     }
 }

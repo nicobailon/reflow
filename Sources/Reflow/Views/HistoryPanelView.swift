@@ -115,11 +115,16 @@ struct HistoryItemRow: View {
     
     var body: some View {
         HStack(spacing: 10) {
-            if item.isPinned {
-                Image(systemName: "pin.fill")
-                    .font(.caption)
-                    .foregroundStyle(.orange)
+            Group {
+                if item.isPinned {
+                    Image(systemName: "pin.fill")
+                        .foregroundStyle(.orange)
+                } else {
+                    Color.clear
+                }
             }
+            .font(.caption)
+            .frame(width: 14)
             
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
