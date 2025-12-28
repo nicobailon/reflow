@@ -246,14 +246,19 @@ struct PopoverPanelView: View {
             Divider()
                 .frame(height: 16)
             
-            Picker("", selection: $settings.aggressiveness) {
-                Text("Conservative").tag(Aggressiveness.conservative)
-                Text("Normal").tag(Aggressiveness.normal)
-                Text("Aggressive").tag(Aggressiveness.aggressive)
+            HStack(spacing: 4) {
+                Text("Reflow:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Picker("", selection: $settings.aggressiveness) {
+                    Text("C").tag(Aggressiveness.conservative)
+                    Text("N").tag(Aggressiveness.normal)
+                    Text("A").tag(Aggressiveness.aggressive)
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 80)
             }
-            .pickerStyle(.segmented)
-            .frame(width: 240)
-            .help("How aggressively to join wrapped lines")
+            .help("Reflow aggressiveness: Conservative / Normal / Aggressive")
             
             Toggle("MD", isOn: $settings.markdownAware)
                 .toggleStyle(.button)
