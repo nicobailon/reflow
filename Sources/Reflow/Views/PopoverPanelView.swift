@@ -1,10 +1,17 @@
 import SwiftUI
 import ReflowCore
+import Sparkle
 
-struct HistoryPanelView: View {
+struct PopoverPanelView: View {
+    @ObservedObject var settings: AppSettings
     @ObservedObject var historyManager: ClipboardHistoryManager
     @ObservedObject var monitor: ClipboardMonitor
-    @Environment(\.dismiss) private var dismiss
+    @ObservedObject var accessibilityManager: AccessibilityManager
+    @ObservedObject var statisticsManager: StatisticsManager
+    let updater: SPUUpdater
+    let dismiss: () -> Void
+    
+    @Environment(\.openSettings) private var openSettings
     @State private var selectedItemId: UUID?
     @FocusState private var searchFieldFocused: Bool
     
@@ -14,12 +21,12 @@ struct HistoryPanelView: View {
     }
     
     var body: some View {
-        HStack(spacing: 0) {
-            detailPanel
+        VStack(spacing: 0) {
+            mainContent
             Divider()
-            listPanel
+            bottomToolbar
         }
-        .frame(width: 650, height: 400)
+        .frame(width: 650, height: 450)
         .onAppear {
             searchFieldFocused = true
             if selectedItemId == nil, let first = historyManager.filteredItems.first {
@@ -28,6 +35,14 @@ struct HistoryPanelView: View {
         }
         .onExitCommand {
             dismiss()
+        }
+    }
+    
+    private var mainContent: some View {
+        HStack(spacing: 0) {
+            detailPanel
+            Divider()
+            listPanel
         }
     }
     
@@ -164,7 +179,7 @@ struct HistoryPanelView: View {
     private var historyList: some View {
         List(selection: $selectedItemId) {
             ForEach(Array(historyManager.filteredItems.enumerated()), id: \.element.id) { index, item in
-                HistoryItemRow(
+                PopoverHistoryItemRow(
                     item: item,
                     index: index,
                     isSelected: selectedItemId == item.id,
@@ -204,10 +219,123 @@ struct HistoryPanelView: View {
             }
             return .ignored
         }
+        .onKeyPress(characters: .decimalDigits) { press in
+            guard press.modifiers.contains(.command),
+                  let char = press.characters.first,
+                  let digit = Int(String(char)),
+                  digit >= 1 && digit <= 9 else {
+                return .ignored
+            }
+            let itemIndex = digit - 1
+            if itemIndex < historyManager.filteredItems.count {
+                let item = historyManager.filteredItems[itemIndex]
+                monitor.pasteFromHistory(item: item, reflow: item.isReflowCandidate)
+                dismiss()
+                return .handled
+            }
+            return .ignored
+        }
+    }
+    
+    private var bottomToolbar: some View {
+        HStack(spacing: 12) {
+            Toggle("Auto-Reflow", isOn: $settings.autoReflowEnabled)
+                .toggleStyle(.switch)
+                .controlSize(.small)
+            
+            Divider()
+                .frame(height: 16)
+            
+            Picker("", selection: $settings.aggressiveness) {
+                Text("C").tag(Aggressiveness.conservative)
+                Text("N").tag(Aggressiveness.normal)
+                Text("A").tag(Aggressiveness.aggressive)
+            }
+            .pickerStyle(.segmented)
+            .frame(width: 80)
+            .help("Conservative / Normal / Aggressive")
+            
+            Toggle("MD", isOn: $settings.markdownAware)
+                .toggleStyle(.button)
+                .controlSize(.small)
+                .help("Markdown-Aware Mode")
+            
+            Divider()
+                .frame(height: 16)
+            
+            if let source = monitor.currentClipboard?.sourceApp {
+                HStack(spacing: 4) {
+                    Text("Source:")
+                        .foregroundStyle(.secondary)
+                    Text(source.appName ?? "Unknown")
+                        .lineLimit(1)
+                    if source.isRecognizedTerminal {
+                        Text("(terminal)")
+                            .foregroundStyle(.blue)
+                    }
+                }
+                .font(.caption)
+            }
+            
+            Spacer()
+            
+            HStack(spacing: 4) {
+                Text("Stats:")
+                    .foregroundStyle(.secondary)
+                Text("\(statisticsManager.sessionLinesJoined)")
+                    .foregroundStyle(.primary)
+                Text("lines")
+                    .foregroundStyle(.tertiary)
+            }
+            .font(.caption)
+            .help("Session: \(statisticsManager.sessionLinesJoined) lines, \(statisticsManager.sessionPastes) pastes\nAll Time: \(statisticsManager.allTimeLinesJoined) lines, \(statisticsManager.allTimePastes) pastes")
+            
+            Divider()
+                .frame(height: 16)
+            
+            if !accessibilityManager.isTrusted {
+                Button {
+                    accessibilityManager.requestPermission()
+                } label: {
+                    Image(systemName: "exclamationmark.triangle")
+                        .foregroundStyle(.orange)
+                }
+                .buttonStyle(.borderless)
+                .help("Grant Accessibility Permission")
+            }
+            
+            Menu {
+                Button("Clear History") {
+                    historyManager.clear()
+                }
+                Button("Reset Statistics") {
+                    statisticsManager.resetSession()
+                }
+                Divider()
+                Button("Settings...") {
+                    NSApp.activate(ignoringOtherApps: true)
+                    openSettings()
+                }
+                Button("Check for Updates...") {
+                    updater.checkForUpdates()
+                }
+                Divider()
+                Button("Quit Reflow") {
+                    NSApplication.shared.terminate(nil)
+                }
+            } label: {
+                Image(systemName: "ellipsis.circle")
+            }
+            .buttonStyle(.borderless)
+            .menuIndicator(.hidden)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 10)
+        .background(.ultraThinMaterial)
     }
 }
 
-struct HistoryItemRow: View {
+struct PopoverHistoryItemRow: View {
     let item: ClipboardHistoryItem
     let index: Int
     let isSelected: Bool
