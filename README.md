@@ -2,6 +2,8 @@
 
 macOS 15+ menu bar utility that unwraps hard-wrapped terminal text. Detects clipboard copies from terminal apps and provides smart paste options with line wrapping removed, while preserving paragraph breaks, code blocks, and lists.
 
+![Reflow Screenshot](reflow.png)
+
 ## Install
 
 - Download from GitHub Releases: (coming soon)
