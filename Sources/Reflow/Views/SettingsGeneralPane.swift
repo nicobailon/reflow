@@ -35,6 +35,7 @@ struct SettingsGeneralPane: View {
                 Toggle("Auto-Reflow Enabled", isOn: $settings.autoReflowEnabled)
                 Toggle("Markdown-Aware Mode", isOn: $settings.markdownAware)
                 Toggle("Clipboard History", isOn: $historyManager.historyEnabled)
+                Toggle("Show Only Terminal Items", isOn: $settings.showOnlyTerminalItems)
             }
             
             Section {

@@ -8,6 +8,7 @@ final class AppSettings: ObservableObject {
     @AppStorage("aggressiveness") var aggressiveness: Aggressiveness = .normal
     @AppStorage("markdownAware") var markdownAware: Bool = true
     @AppStorage("customPatterns") var customPatternsData: Data = Data()
+    @AppStorage("showOnlyTerminalItems") var showOnlyTerminalItems: Bool = false
     @AppStorage("launchAtLogin") var launchAtLogin: Bool = false {
         didSet { updateLaunchAtLogin() }
     }

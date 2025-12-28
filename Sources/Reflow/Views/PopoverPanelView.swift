@@ -18,9 +18,17 @@ struct PopoverPanelView: View {
     @State private var eventMonitor: Any?
     @State private var scrollProxy: ScrollViewProxy?
     
+    private var displayedItems: [ClipboardHistoryItem] {
+        let items = displayedItems
+        if settings.showOnlyTerminalItems {
+            return items.filter { $0.isReflowCandidate }
+        }
+        return items
+    }
+    
     private var selectedItem: ClipboardHistoryItem? {
         guard let id = selectedItemId else { return nil }
-        return historyManager.filteredItems.first { $0.id == id }
+        return displayedItems.first { $0.id == id }
     }
     
     var body: some View {
@@ -31,7 +39,7 @@ struct PopoverPanelView: View {
         }
         .frame(width: 650, height: 420)
         .onAppear {
-            if selectedItemId == nil, let first = historyManager.filteredItems.first {
+            if selectedItemId == nil, let first = displayedItems.first {
                 selectedItemId = first.id
             }
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
@@ -49,7 +57,7 @@ struct PopoverPanelView: View {
             dismiss()
         }
         .onChange(of: historyManager.searchQuery) { _, _ in
-            let filtered = historyManager.filteredItems
+            let filtered = displayedItems
             if let id = selectedItemId, !filtered.contains(where: { $0.id == id }) {
                 selectedItemId = filtered.first?.id
             }
@@ -77,7 +85,7 @@ struct PopoverPanelView: View {
                     return nil
                 }
             case 126: // Up arrow
-                let items = self.historyManager.filteredItems
+                let items = self.displayedItems
                 if !items.isEmpty {
                     if let currentId = self.selectedItemId,
                        let currentIndex = items.firstIndex(where: { $0.id == currentId }),
@@ -89,7 +97,7 @@ struct PopoverPanelView: View {
                     return nil
                 }
             case 125: // Down arrow
-                let items = self.historyManager.filteredItems
+                let items = self.displayedItems
                 if !items.isEmpty {
                     if let currentId = self.selectedItemId,
                        let currentIndex = items.firstIndex(where: { $0.id == currentId }),
@@ -102,10 +110,10 @@ struct PopoverPanelView: View {
                 }
             case 51: // Delete
                 if let id = self.selectedItemId {
-                    let items = self.historyManager.filteredItems
+                    let items = self.displayedItems
                     let currentIndex = items.firstIndex { $0.id == id }
                     self.historyManager.removeItem(id)
-                    let updatedItems = self.historyManager.filteredItems
+                    let updatedItems = self.displayedItems
                     if let idx = currentIndex, !updatedItems.isEmpty {
                         let nextIndex = min(idx, updatedItems.count - 1)
                         self.selectedItemId = updatedItems[nextIndex].id
@@ -222,7 +230,7 @@ struct PopoverPanelView: View {
             searchBar
             Divider()
             
-            if historyManager.filteredItems.isEmpty {
+            if displayedItems.isEmpty {
                 emptyState
             } else {
                 historyList
@@ -277,7 +285,7 @@ struct PopoverPanelView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(spacing: 0) {
-                    ForEach(Array(historyManager.filteredItems.enumerated()), id: \.element.id) { index, item in
+                    ForEach(Array(displayedItems.enumerated()), id: \.element.id) { index, item in
                         PopoverHistoryItemRow(
                             item: item,
                             index: index,
@@ -441,6 +449,7 @@ struct PopoverHistoryItemRow: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(isSelected ? Color.accentColor.opacity(0.3) : (isHovering ? Color.primary.opacity(0.08) : Color.clear))
         )
+        .opacity(item.isReflowCandidate ? 1.0 : 0.5)
         .contentShape(Rectangle())
         .onHover { hovering in
             isHovering = hovering
