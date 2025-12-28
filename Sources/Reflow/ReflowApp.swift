@@ -71,6 +71,13 @@ struct ReflowApp: App {
         Settings {
             SettingsView(settings: settings, historyManager: historyManager, updater: updaterController.updater)
         }
+        
+        Window("Clipboard History", id: "history") {
+            HistoryPanelView(historyManager: historyManager, monitor: monitor)
+        }
+        .windowStyle(.hiddenTitleBar)
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
     
     private func applyStatusItemAppearance() {

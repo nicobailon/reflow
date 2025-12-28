@@ -15,6 +15,10 @@ struct SettingsShortcutsPane: View {
                 KeyboardShortcuts.Recorder("Paste Aggressive:", name: .pasteAggressive)
             }
             
+            Section("History") {
+                KeyboardShortcuts.Recorder("Show History:", name: .showHistory)
+            }
+            
             Section {
                 Button("Reset to Defaults") {
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteReflowed, for: .pasteReflowed)
@@ -22,6 +26,7 @@ struct SettingsShortcutsPane: View {
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.toggleAutoReflow, for: .toggleAutoReflow)
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteConservative, for: .pasteConservative)
                     KeyboardShortcuts.setShortcut(DefaultShortcuts.pasteAggressive, for: .pasteAggressive)
+                    KeyboardShortcuts.setShortcut(DefaultShortcuts.showHistory, for: .showHistory)
                 }
             }
         }
