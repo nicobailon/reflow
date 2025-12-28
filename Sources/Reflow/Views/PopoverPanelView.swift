@@ -19,7 +19,7 @@ struct PopoverPanelView: View {
     @State private var scrollProxy: ScrollViewProxy?
     
     private var displayedItems: [ClipboardHistoryItem] {
-        let items = displayedItems
+        let items = historyManager.filteredItems
         if settings.showOnlyTerminalItems {
             return items.filter { $0.isReflowCandidate }
         }
