@@ -37,6 +37,12 @@ struct PopoverPanelView: View {
         .onExitCommand {
             dismiss()
         }
+        .onChange(of: historyManager.searchQuery) { _, _ in
+            let filtered = historyManager.filteredItems
+            if let id = selectedItemId, !filtered.contains(where: { $0.id == id }) {
+                selectedItemId = filtered.first?.id
+            }
+        }
     }
     
     private var mainContent: some View {
