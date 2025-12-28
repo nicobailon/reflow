@@ -13,6 +13,7 @@ struct PopoverPanelView: View {
     
     @Environment(\.openSettings) private var openSettings
     @State private var selectedItemId: UUID?
+    @State private var showDetails = false
     @FocusState private var searchFieldFocused: Bool
     
     private var selectedItem: ClipboardHistoryItem? {
@@ -58,53 +59,65 @@ struct PopoverPanelView: View {
                 }
                 .frame(maxHeight: .infinity)
                 
-                Divider()
-                
-                VStack(alignment: .leading, spacing: 8) {
-                    HStack {
-                        Image(systemName: item.isFromTerminal ? "terminal" : "app")
-                            .foregroundStyle(item.isFromTerminal ? .blue : .secondary)
-                        Text("Application: ")
-                            .foregroundStyle(.secondary)
-                        Text(item.sourceDisplayName)
-                        if item.isFromTerminal {
-                            Text("(recognized)")
-                                .foregroundStyle(.secondary)
-                                .font(.caption)
+                VStack(alignment: .leading, spacing: 0) {
+                    Button {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showDetails.toggle()
                         }
+                    } label: {
+                        HStack {
+                            Image(systemName: showDetails ? "chevron.down" : "chevron.right")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .frame(width: 12)
+                            Text("Details")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Spacer()
+                            if item.isFromTerminal {
+                                Image(systemName: "terminal")
+                                    .font(.caption)
+                                    .foregroundStyle(.blue)
+                            }
+                            Text(item.sourceDisplayName)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .contentShape(Rectangle())
                     }
+                    .buttonStyle(.plain)
                     
-                    HStack {
-                        Text("First copy time:")
-                            .foregroundStyle(.secondary)
-                        Text(item.firstCopyDate.formatted(date: .abbreviated, time: .shortened))
-                    }
-                    
-                    HStack {
-                        Text("Last copy time:")
-                            .foregroundStyle(.secondary)
-                        Text(item.lastCopyDate.formatted(date: .abbreviated, time: .shortened))
-                    }
-                    
-                    HStack {
-                        Text("Number of copies:")
-                            .foregroundStyle(.secondary)
-                        Text("\(item.copyCount)")
-                    }
-                    
-                    Divider()
-                    
-                    HStack(spacing: 16) {
-                        Text("Press Delete to remove.")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
-                        Text("Right-click for more options.")
-                            .font(.caption)
-                            .foregroundStyle(.tertiary)
+                    if showDetails {
+                        Divider()
+                        VStack(alignment: .leading, spacing: 6) {
+                            HStack {
+                                Text("First copied:")
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text(item.firstCopyDate.formatted(date: .abbreviated, time: .shortened))
+                            }
+                            
+                            HStack {
+                                Text("Last copied:")
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text(item.lastCopyDate.formatted(date: .abbreviated, time: .shortened))
+                            }
+                            
+                            HStack {
+                                Text("Copy count:")
+                                    .foregroundStyle(.secondary)
+                                Spacer()
+                                Text("\(item.copyCount)")
+                            }
+                        }
+                        .font(.caption)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
                     }
                 }
-                .font(.caption)
-                .padding()
                 .background(.ultraThinMaterial)
             } else {
                 VStack {
