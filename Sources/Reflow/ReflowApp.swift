@@ -71,6 +71,7 @@ struct ReflowApp: App {
                         app.activate()
                         DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
                             monitor.pasteFromHistory(item: item, reflow: reflow)
+                            previousApp = nil
                         }
                     } else {
                         monitor.pasteFromHistory(item: item, reflow: reflow)
@@ -107,9 +108,6 @@ struct ReflowApp: App {
                 if frontmost?.bundleIdentifier != Bundle.main.bundleIdentifier {
                     previousApp = frontmost
                 }
-            }
-            if !isNowPresented {
-                previousApp = nil
             }
         }
         
