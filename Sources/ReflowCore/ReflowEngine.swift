@@ -114,7 +114,7 @@ public struct ReflowEngine: Sendable {
             
             if options.markdownAware && isCodeFenceDelimiter(trimmed) {
                 if !currentParagraph.isEmpty {
-                    result.append(currentParagraph.joined(separator: " "))
+                    result.append(joinParagraphLines(currentParagraph))
                     totalLinesJoined += currentParagraph.count - 1
                     currentParagraph = []
                 }
@@ -130,7 +130,7 @@ public struct ReflowEngine: Sendable {
             
             if trimmed.isEmpty {
                 if !currentParagraph.isEmpty {
-                    result.append(currentParagraph.joined(separator: " "))
+                    result.append(joinParagraphLines(currentParagraph))
                     totalLinesJoined += currentParagraph.count - 1
                     currentParagraph = []
                 }
@@ -140,7 +140,7 @@ public struct ReflowEngine: Sendable {
             
             if shouldPreserveLine(line, options: options, compiledPatterns: compiledPatterns) {
                 if !currentParagraph.isEmpty {
-                    result.append(currentParagraph.joined(separator: " "))
+                    result.append(joinParagraphLines(currentParagraph))
                     totalLinesJoined += currentParagraph.count - 1
                     currentParagraph = []
                 }
@@ -152,7 +152,7 @@ public struct ReflowEngine: Sendable {
         }
         
         if !currentParagraph.isEmpty {
-            result.append(currentParagraph.joined(separator: " "))
+            result.append(joinParagraphLines(currentParagraph))
             totalLinesJoined += currentParagraph.count - 1
         }
         
@@ -169,6 +169,47 @@ public struct ReflowEngine: Sendable {
     
     private static func isCodeFenceDelimiter(_ line: String) -> Bool {
         line.hasPrefix("```") || line.hasPrefix("~~~")
+    }
+    
+    private static func joinParagraphLines(_ lines: [String]) -> String {
+        guard !lines.isEmpty else { return "" }
+        guard lines.count > 1 else { return lines[0] }
+        
+        var result = lines[0]
+        
+        for i in 1..<lines.count {
+            let prevLine = lines[i - 1]
+            let currentLine = lines[i]
+            
+            let separator = shouldJoinWithoutSpace(prevLine: prevLine, nextLine: currentLine) ? "" : " "
+            result += separator + currentLine
+        }
+        
+        return result
+    }
+    
+    private static func shouldJoinWithoutSpace(prevLine: String, nextLine: String) -> Bool {
+        guard let lastChar = prevLine.last, let firstChar = nextLine.first else {
+            return false
+        }
+        
+        let continuationChars = CharacterSet.alphanumerics
+            .union(CharacterSet(charactersIn: "/-_.:~@"))
+        
+        let lastIsContinuation = lastChar.unicodeScalars.allSatisfy { continuationChars.contains($0) }
+        let firstIsContinuation = firstChar.unicodeScalars.allSatisfy { continuationChars.contains($0) }
+        
+        if !lastIsContinuation || !firstIsContinuation {
+            return false
+        }
+        
+        let combined = prevLine + nextLine
+        let looksLikePath = combined.contains("/") && 
+            (combined.hasPrefix("/") || combined.hasPrefix("./") || combined.hasPrefix("../") || combined.contains("://"))
+        let looksLikeUrl = combined.contains("://") || combined.hasPrefix("www.")
+        let looksLikeLongToken = !prevLine.contains(" ") && !nextLine.contains(" ")
+        
+        return looksLikePath || looksLikeUrl || looksLikeLongToken
     }
     
     private static func shouldPreserveLine(
